@@ -123,8 +123,8 @@ async function gasSyncUser(user) {
         username: user.username,
         email: user.email,
         avatarPreset: user.avatarPreset,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
+        avatarUrl: user.avatarUrl || "",
+        bio: user.bio || "",
         activeTitle: user.activeTitle,
         level: levelInfo(computeUserXP(user)).level,
         coins: user.coins || 0,
@@ -372,27 +372,14 @@ function AuthScreen({ onLogin, t }) {
     if (!email.trim() || !password.trim()) { setError("請輸入 Email 與密碼"); return; }
     setBusy(true);
     const res = await gasLogin(email.trim(), password);
-    setBusy(false);
-    if (!res.ok) { setError(res.error || "Email 或密碼錯誤"); return; }
-    
-    let finalUser = res.user;
-    if (GAS_CONFIGURED && res.user.email) {
-      try {
-        const freshData = await gasFetchByEmail(res.user.email);
-        if (freshData && freshData.id === res.user.id) {
-          finalUser = freshData;
-        }
-      } catch (err) {
-        console.warn("無法從 Google Sheet 重新讀取資料，使用登入回傳的資料", err);
-      }
-    }
-    
+    if (!res.ok) { setBusy(false); setError(res.error || "Email 或密碼錯誤"); return; }
     const users = getAllUsers();
-    const idx = users.findIndex(u => u.id === finalUser.id);
-    if (idx === -1) users.push(finalUser); else users[idx] = { ...users[idx], ...finalUser };
+    const idx = users.findIndex(u => u.id === res.user.id);
+    if (idx === -1) users.push(res.user); else users[idx] = { ...users[idx], ...res.user };
     saveAllUsers(users);
-    saveSession(finalUser.id);
-    onLogin(finalUser.id);
+    saveSession(res.user.id);
+    setBusy(false);
+    onLogin(res.user.id);
   }
 
   // 註冊：後端會檢查 email / username 是否已被使用（任一重複都禁止建立新帳號）
@@ -463,7 +450,22 @@ function ProfileScreen({ user, onBack, onSave, t }) {
 
   function handleFileChange(e) {
     const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader(); reader.onload = ev => setAvatarUrl(ev.target.result); reader.readAsDataURL(file);
+    // 壓縮到最大 200x200、品質 0.7，避免 base64 超出 Google Sheet 單格上限
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ev => {
+      img.onload = () => {
+        const MAX = 200;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        setAvatarUrl(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
   }
   function handleSave() { onSave({ username, bio, avatarPreset, avatarUrl }); onBack(); }
 
@@ -927,20 +929,20 @@ export default function App() {
   const [, forceUpdate] = useState(0);
 
   useEffect(()=>{
-    const session=getCurrentSession();
-    if(session){
-      const u=getUserById(session);
-      if(u){
-        setUserId(session);setUser(u);setScreen("home");
-        if (GAS_CONFIGURED && u.email) {
-          gasFetchByEmail(u.email).then(remote=>{
-            if(remote && remote.id===session){
-              updateUser(session, remote);
-              setUser(getUserById(session));
-            }
-          });
+    const session = getCurrentSession();
+    if (!session) return;
+    const local = getUserById(session);
+    if (!local) return;
+    // 先顯示本機快取，讓 UI 立刻呈現
+    setUserId(session); setUser(local); setScreen("home");
+    // 再從 GAS 拉最新資料（含頭像、習慣、金幣），靜默更新
+    if (GAS_CONFIGURED && local.email) {
+      gasFetchByEmail(local.email).then(remote => {
+        if (remote && remote.id === session) {
+          updateUser(session, remote);
+          setUser(u => ({ ...u, ...remote }));
         }
-      }
+      }).catch(() => {});
     }
   },[]);
   useEffect(()=>{saveJSON("rpg:dark",darkMode);},[darkMode]);
@@ -949,10 +951,12 @@ export default function App() {
   function showCoinGain(amount,reason) { setCoinToast({amount,reason,id:Date.now()}); setTimeout(()=>setCoinToast(null),2200); }
   function handleLogin(uid) { const u=getUserById(uid); setUserId(uid); setUser(u); setScreen("home"); }
   function handleLogout() { clearSession(); setUserId(null); setUser(null); setScreen("auth"); setSubScreen(null); setView("today"); }
-  function handleSaveProfile(patch) {
-    updateUser(userId,patch); refreshUser();
+  async function handleSaveProfile(patch) {
+    updateUser(userId, patch);
     const updated = getUserById(userId);
-    if (updated) gasSyncUser(updated);
+    if (updated) await gasSyncUser(updated);
+    // 同步完再 refresh，確保雲端有最新資料
+    refreshUser();
   }
   function handleUpdateUser(patch) { updateUser(userId,patch); refreshUser(); }
 
