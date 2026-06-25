@@ -71,6 +71,9 @@ function publicUser(obj) {
   let rankHistory = [];
   try { rankHistory = JSON.parse(obj.rankHistory || "[]"); } catch (e) {}
   
+  let petBattleStats = {};
+  try { petBattleStats = JSON.parse(obj.petBattleStats || "{}"); } catch (e) {}
+  
   return {
     id: obj.id,
     username: obj.username,
@@ -88,6 +91,7 @@ function publicUser(obj) {
     pendingFriendRequests: pendingFriendRequests,
     pets: pets,
     rankHistory: rankHistory,
+    petBattleStats: petBattleStats,
     createdAt: obj.createdAt || "",
   };
 }
@@ -164,6 +168,7 @@ function doPost(e) {
         pendingFriendRequests: "[]",
         pets: "[]",
         rankHistory: "[]",
+        petBattleStats: "{}",
         createdAt: now,
         updatedAt: now,
       };
@@ -242,6 +247,7 @@ function doPost(e) {
         pendingFriendRequests: typeof u.pendingFriendRequests === "string" ? u.pendingFriendRequests : JSON.stringify(u.pendingFriendRequests || []),
         pets: typeof u.pets === "string" ? u.pets : JSON.stringify(u.pets || []),
         rankHistory: typeof u.rankHistory === "string" ? u.rankHistory : JSON.stringify(u.rankHistory || []),
+        petBattleStats: typeof u.petBattleStats === "string" ? u.petBattleStats : JSON.stringify(u.petBattleStats || {}),
         updatedAt: new Date().toISOString(),
         // passwordHash 永遠保留原值，upsert 不會更動密碼
       });
