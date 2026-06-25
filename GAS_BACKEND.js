@@ -65,6 +65,15 @@ function publicUser(obj) {
     let pendingFriendRequests = [];
     try { pendingFriendRequests = JSON.parse(obj.pendingFriendRequests || "[]"); } catch (e) {}
 
+  let pets = [];
+  try { pets = JSON.parse(obj.pets || "[]"); } catch (e) {}
+  
+  let rankHistory = [];
+  try { rankHistory = JSON.parse(obj.rankHistory || "[]"); } catch (e) {}
+  
+  let petBattleStats = {};
+  try { petBattleStats = JSON.parse(obj.petBattleStats || "{}"); } catch (e) {}
+  
   return {
     id: obj.id,
     username: obj.username,
@@ -80,6 +89,9 @@ function publicUser(obj) {
     unlockedTitles: unlockedTitles,
     claimedChallenges: claimedChallenges,
     pendingFriendRequests: pendingFriendRequests,
+    pets: pets,
+    rankHistory: rankHistory,
+    petBattleStats: petBattleStats,
     createdAt: obj.createdAt || "",
   };
 }
@@ -154,6 +166,9 @@ function doPost(e) {
         unlockedTitles: JSON.stringify(["rookie"]),
         claimedChallenges: "[]",
         pendingFriendRequests: "[]",
+        pets: "[]",
+        rankHistory: "[]",
+        petBattleStats: "{}",
         createdAt: now,
         updatedAt: now,
       };
@@ -220,7 +235,7 @@ function doPost(e) {
       const merged = Object.assign({}, existing, {
         username: u.username || existing.username,
         avatarPreset: u.avatarPreset || existing.avatarPreset,
-        avatarUrl: u.avatarUrl != null ? u.avatarUrl : existing.avatarUrl,
+        avatarUrl: (u.avatarUrl !== undefined) ? u.avatarUrl : existing.avatarUrl,
         bio: u.bio != null ? u.bio : existing.bio,
         activeTitle: u.activeTitle || existing.activeTitle,
         level: u.level || existing.level,
@@ -230,6 +245,9 @@ function doPost(e) {
         unlockedTitles: typeof u.unlockedTitles === "string" ? u.unlockedTitles : JSON.stringify(u.unlockedTitles || ["rookie"]),
         claimedChallenges: typeof u.claimedChallenges === "string" ? u.claimedChallenges : JSON.stringify(u.claimedChallenges || []),
         pendingFriendRequests: typeof u.pendingFriendRequests === "string" ? u.pendingFriendRequests : JSON.stringify(u.pendingFriendRequests || []),
+        pets: typeof u.pets === "string" ? u.pets : JSON.stringify(u.pets || []),
+        rankHistory: typeof u.rankHistory === "string" ? u.rankHistory : JSON.stringify(u.rankHistory || []),
+        petBattleStats: typeof u.petBattleStats === "string" ? u.petBattleStats : JSON.stringify(u.petBattleStats || {}),
         updatedAt: new Date().toISOString(),
         // passwordHash 永遠保留原值，upsert 不會更動密碼
       });
