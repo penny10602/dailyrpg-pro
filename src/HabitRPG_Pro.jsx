@@ -64,6 +64,503 @@ const DEFAULT_AVATARS = [
 const EMOJI_CHOICES = ["💧","🏃","📖","🧘","🍎","😴","✍️","🎨","💪","🦷","🌞","🎯","🧹","🥗","🚴","🛏️","📵","🙏","🎵","🐶","🧺","☕","🚭","🌱"];
 
 /* ══════════════════════════════════════════
+   Advanced Pet Card - 增強型寵物卡片
+   支援動態特效、屬性展示與互動
+   ══════════════════════════════════════════ */
+
+function AdvancedPetCard({ pet, t, size = "medium" }) {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  // 根據稀有度決定顏色
+  const rarityColors = {
+    common: SAGE,
+    legend: AMETHYST,
+    ssr: GOLD,
+    hidden: "#FF1493", // 深粉紅色
+  };
+  
+  const rarityLabels = {
+    common: "普通",
+    legend: "傳說",
+    ssr: "SSR",
+    hidden: "🔐 隱藏",
+  };
+  
+  const rarityBgGradients = {
+    common: `linear-gradient(135deg, ${SAGE}22, ${SAGE}11)`,
+    legend: `linear-gradient(135deg, ${AMETHYST}22, ${AMETHYST}11)`,
+    ssr: `linear-gradient(135deg, ${GOLD}22, ${GOLD}11)`,
+    hidden: `linear-gradient(135deg, #FF149322, #FF149311)`,
+  };
+  
+  // 尺寸配置
+  const sizeConfig = {
+    small: { emojiSize: 32, padding: "8px", fontSize: 10 },
+    medium: { emojiSize: 48, padding: "12px", fontSize: 12 },
+    large: { emojiSize: 64, padding: "16px", fontSize: 13 },
+  };
+  
+  const config = sizeConfig[size];
+  
+  // 獲取屬性標籤
+  const attributes = getPetAttributes(pet);
+  
+  // 特效樣式
+  const effectStyles = {
+    full_glow: {
+      animation: "glow 2s ease-in-out infinite",
+      textShadow: `0 0 10px ${GOLD}, 0 0 20px ${GOLD}`,
+    },
+    rainbow_flow: {
+      animation: "rainbowFlow 3s linear infinite",
+      backgroundImage: `linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)`,
+      backgroundSize: "200% 100%",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+    },
+    starry_sky: {
+      animation: "twinkle 1.5s ease-in-out infinite",
+      textShadow: `0 0 5px #FFD700, 0 0 10px #FFD700`,
+    },
+    diamond_shine: {
+      animation: "shine 2s ease-in-out infinite",
+      textShadow: `0 0 8px #00FFFF, 0 0 16px #00FFFF`,
+    },
+    light_wings: {
+      animation: "float 3s ease-in-out infinite",
+    },
+    golden_border: {
+      textShadow: `0 0 5px ${GOLD}`,
+    },
+    glowing_eyes: {
+      animation: "eyeGlow 1s ease-in-out infinite",
+    },
+  };
+  
+  const emojiStyle = pet.effect ? effectStyles[pet.effect.id] : {};
+  
+  return (
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        background: rarityBgGradients[pet.rarity],
+        border: `2px solid ${rarityColors[pet.rarity]}`,
+        borderRadius: 14,
+        padding: config.padding,
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        cursor: "pointer",
+        transition: "transform 0.2s, box-shadow 0.2s",
+        transform: isHovered ? "scale(1.05)" : "scale(1)",
+        boxShadow: isHovered ? `0 8px 20px ${rarityColors[pet.rarity]}44` : "none",
+      }}
+    >
+      {/* 寵物 Emoji */}
+      <div
+        style={{
+          fontSize: config.emojiSize,
+          ...emojiStyle,
+        }}
+      >
+        {pet.emoji}
+      </div>
+      
+      {/* 寵物名稱 */}
+      <div style={{ fontSize: config.fontSize, fontWeight: 700, color: t.ink, fontFamily: "Inter, sans-serif" }}>
+        {pet.name}
+      </div>
+      
+      {/* 稀有度標籤 */}
+      <div
+        style={{
+          fontSize: config.fontSize - 1,
+          fontWeight: 700,
+          color: rarityColors[pet.rarity],
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        {rarityLabels[pet.rarity]}
+      </div>
+      
+      {/* 性格標籤 */}
+      {pet.personality && (
+        <div style={{ fontSize: config.fontSize - 1, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+          {pet.personality.emoji} {pet.personality.name}
+        </div>
+      )}
+      
+      {/* 屬性展示（懸停時顯示） */}
+      {isHovered && attributes.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 4 }}>
+          {attributes.map((attr, idx) => (
+            <div
+              key={idx}
+              style={{
+                fontSize: config.fontSize - 2,
+                color: t.muted,
+                fontFamily: "Inter, sans-serif",
+                padding: "2px 6px",
+                background: t.chip,
+                borderRadius: 6,
+              }}
+            >
+              {attr}
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <style>{`
+        @keyframes glow {
+          0%, 100% { text-shadow: 0 0 10px ${GOLD}, 0 0 20px ${GOLD}; }
+          50% { text-shadow: 0 0 20px ${GOLD}, 0 0 40px ${GOLD}; }
+        }
+        
+        @keyframes rainbowFlow {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 1; text-shadow: 0 0 5px #FFD700, 0 0 10px #FFD700; }
+          50% { opacity: 0.6; text-shadow: 0 0 2px #FFD700; }
+        }
+        
+        @keyframes shine {
+          0%, 100% { text-shadow: 0 0 8px #00FFFF, 0 0 16px #00FFFF; }
+          50% { text-shadow: 0 0 16px #00FFFF, 0 0 32px #00FFFF; }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-4px); }
+        }
+        
+        @keyframes eyeGlow {
+          0%, 100% { text-shadow: 0 0 3px #FF6B9D; }
+          50% { text-shadow: 0 0 8px #FF6B9D; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════
+   Advanced Pet Shop - 增強型寵物商店
+   支援隱藏彩蛋提示、新寵物展示與詳細屬性
+   ══════════════════════════════════════════ */
+
+// 高級寵物系統常數（與 advanced_pet_gacha_system.js 同步）
+const GACHA_COST = 50;
+
+function AdvancedPetShopScreen({ user, onBack, onUpdateUser, t }) {
+  const [gachaResult, setGachaResult] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showHiddenHint, setShowHiddenHint] = useState(false);
+  const [, forceUpdate] = useState(0);
+
+  const coins = user.coins || 0;
+  const pets = user.pets || [];
+  const canGacha = coins >= GACHA_COST;
+
+  // 統計寵物稀有度分布
+  const petStats = {
+    common: pets.filter(p => p.rarity === "common").length,
+    legend: pets.filter(p => p.rarity === "legend").length,
+    ssr: pets.filter(p => p.rarity === "ssr").length,
+    hidden: pets.filter(p => p.rarity === "hidden").length,
+  };
+
+  function handleGacha() {
+    if (!canGacha) return;
+    
+    setIsAnimating(true);
+    
+    // 模擬扭蛋動畫延遲
+    setTimeout(() => {
+      const newPet = performAdvancedGacha();
+      setGachaResult(newPet);
+      
+      // 檢查是否抽到隱藏寵物
+      if (newPet.rarity === "hidden") {
+        setShowHiddenHint(true);
+      }
+      
+      // 更新使用者資料
+      const updatedPets = [...pets, newPet];
+      const updatedCoins = coins - GACHA_COST;
+      onUpdateUser({ pets: updatedPets, coins: updatedCoins });
+      
+      setIsAnimating(false);
+    }, 1500);
+  }
+
+  function closeResult() {
+    setGachaResult(null);
+    setShowHiddenHint(false);
+    forceUpdate(n => n + 1);
+  }
+
+  const rarityColors = {
+    common: SAGE,
+    legend: AMETHYST,
+    ssr: GOLD,
+    hidden: "#FF1493",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* 頭部 */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              color: t.muted,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+              padding: 0,
+            }}
+          >
+            ← 返回
+          </button>
+          <span style={{ fontFamily: "Fraunces, serif", fontSize: 18, fontWeight: 600, color: t.ink }}>
+            🎰 寵物扭蛋
+          </span>
+        </div>
+        <CoinBadge coins={coins} />
+      </div>
+
+      {/* 扭蛋介紹 */}
+      <div style={{ background: t.cardAlt, borderRadius: 14, padding: "14px 16px" }}>
+        <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 13, color: t.ink, marginBottom: 8 }}>
+          🎰 扭蛋機率
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+            <span>普通 (6 種物種 + 顏色花紋)</span>
+            <span style={{ fontWeight: 700, color: SAGE }}>60%</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+            <span>傳說 (6 種物種 + 特效)</span>
+            <span style={{ fontWeight: 700, color: AMETHYST }}>30%</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+            <span>SSR (6 種物種 + 高級特效)</span>
+            <span style={{ fontWeight: 700, color: GOLD }}>9%</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+            <span>🔐 隱藏彩蛋 (王冠貓、暗黑兔、冰晶狗)</span>
+            <span style={{ fontWeight: 700, color: "#FF1493" }}>1%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 寵物統計 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+        <StatBox label="普通" count={petStats.common} color={SAGE} />
+        <StatBox label="傳說" count={petStats.legend} color={AMETHYST} />
+        <StatBox label="SSR" count={petStats.ssr} color={GOLD} />
+        <StatBox label="隱藏" count={petStats.hidden} color="#FF1493" />
+      </div>
+
+      {/* 隱藏彩蛋提示 */}
+      {showHiddenHint && (
+        <div style={{ background: "#FF149922", border: `2px solid #FF1493`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
+          <div style={{ fontSize: 16, marginBottom: 4 }}>🎉 恭喜！</div>
+          <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 13, color: "#FF1493", marginBottom: 4 }}>
+            您抽到了隱藏彩蛋！
+          </div>
+          <div style={{ fontSize: 11, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+            這是極低機率的特殊寵物，非常稀有！
+          </div>
+        </div>
+      )}
+
+      {/* 扭蛋按鈕 */}
+      <button
+        onClick={handleGacha}
+        disabled={!canGacha || isAnimating}
+        style={{
+          width: "100%",
+          padding: "16px",
+          borderRadius: 14,
+          border: "none",
+          background: canGacha && !isAnimating ? `linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})` : t.chip,
+          color: canGacha && !isAnimating ? "#FFFCFA" : t.muted,
+          fontWeight: 700,
+          fontSize: 16,
+          cursor: canGacha && !isAnimating ? "pointer" : "not-allowed",
+          fontFamily: "Inter, sans-serif",
+          transition: "transform 0.2s",
+          transform: isAnimating ? "scale(0.95)" : "scale(1)",
+        }}
+      >
+        {isAnimating ? "轉動中... ✨" : `🎰 扭蛋 (${GACHA_COST} 金幣)`}
+      </button>
+
+      {!canGacha && (
+        <div style={{ textAlign: "center", color: CLAY_DEEP, fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+          ⚠️ 金幣不足，需要 {GACHA_COST} 金幣
+        </div>
+      )}
+
+      {/* 已收集的寵物 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ fontFamily: "Fraunces, serif", fontSize: 14, fontWeight: 600, color: t.ink }}>
+          已收集的寵物 ({pets.length})
+        </div>
+        {pets.length === 0 ? (
+          <div style={{ textAlign: "center", color: t.muted, fontSize: 12, padding: "20px 0", fontFamily: "Inter, sans-serif" }}>
+            還沒有寵物，開始扭蛋吧！
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 10 }}>
+            {pets.map((pet) => (
+              <AdvancedPetCard key={pet.instanceId} pet={pet} t={t} size="medium" />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 扭蛋結果彈窗 */}
+      {gachaResult && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: t.overlay,
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+          }}
+          onClick={closeResult}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: t.card,
+              borderRadius: 24,
+              padding: "32px 24px",
+              textAlign: "center",
+              maxWidth: 300,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              animation: "slideUp 0.4s cubic-bezier(.22,1,.36,1)",
+            }}
+          >
+            {/* 隱藏彩蛋特殊演出 */}
+            {gachaResult.rarity === "hidden" && (
+              <div style={{ fontSize: 40, marginBottom: 12, animation: "bounce 0.6s ease-in-out infinite" }}>
+                🎉
+              </div>
+            )}
+            
+            <div style={{ fontSize: 60, marginBottom: 16 }}>
+              {gachaResult.emoji}
+            </div>
+            
+            <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 18, color: t.ink, marginBottom: 8 }}>
+              {gachaResult.name}
+            </div>
+            
+            {/* 性格標籤 */}
+            {gachaResult.personality && (
+              <div style={{ fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>
+                {gachaResult.personality.emoji} {gachaResult.personality.name}
+              </div>
+            )}
+            
+            {/* 屬性展示 */}
+            {getPetAttributes(gachaResult).length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+                {getPetAttributes(gachaResult).map((attr, idx) => (
+                  <div key={idx} style={{ fontSize: 11, color: t.muted, fontFamily: "Inter, sans-serif" }}>
+                    {attr}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: rarityColors[gachaResult.rarity],
+                fontFamily: "Inter, sans-serif",
+                marginBottom: 16,
+              }}
+            >
+              ⭐ {["普通", "傳說", "SSR", "🔐 隱藏"][["common", "legend", "ssr", "hidden"].indexOf(gachaResult.rarity)]}
+            </div>
+            
+            <button
+              onClick={closeResult}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: 12,
+                border: "none",
+                background: `linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})`,
+                color: "#FFFCFA",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              確認
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 輔助組件：統計盒子
+function StatBox({ label, count, color }) {
+  return (
+    <div style={{ background: `${color}18`, border: `2px solid ${color}`, borderRadius: 10, padding: "8px", textAlign: "center" }}>
+      <div style={{ fontSize: 10, color: color, fontFamily: "Inter, sans-serif", fontWeight: 600, marginBottom: 2 }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 16, color: color }}>
+        {count}
+      </div>
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════
    Google Apps Script 後端設定
    把你的 GAS 網址貼在這裡
    ══════════════════════════════════════════ */
@@ -487,7 +984,7 @@ function AuthScreen({ onLogin, t }) {
 /* ══════════════════════════════════════════
    Profile Screen
    ══════════════════════════════════════════ */
-function ProfileScreen({ user, onBack, onSave, onGoShop, t }) {
+function ProfileScreen({ user, onBack, onSave, t }) {
   const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio||"");
   const [avatarPreset, setAvatarPreset] = useState(user.avatarPreset||"adventurer");
@@ -528,14 +1025,11 @@ function ProfileScreen({ user, onBack, onSave, onGoShop, t }) {
         {user.pets && user.pets.length > 0 ? (
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(60px, 1fr))", gap:8 }}>
             {user.pets.map((pet, idx) => (
-              <div key={pet.instanceId} style={{ background:t.chip, borderRadius:10, padding:"8px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                <div style={{ fontSize:24 }}>{pet.emoji}</div>
-                <div style={{ fontSize:9, color:t.muted, fontFamily:"Inter, sans-serif", fontWeight:600 }}>{pet.name}</div>
-              </div>
+              <AdvancedPetCard key={pet.instanceId} pet={pet} t={t} size="small" />
             ))}
           </div>
         ) : (
-          <button onClick={onGoShop} style={{ width:"100%", textAlign:"center", color:t.muted, fontSize:11, padding:"12px", fontFamily:"Inter, sans-serif", background:"none", border:`1px dashed ${t.border}`, borderRadius:10, cursor:"pointer" }}>還沒有寵物，去寵物商店扭蛋吧！🎰</button>
+          <div style={{ textAlign:"center", color:t.muted, fontSize:11, padding:"12px", fontFamily:"Inter, sans-serif" }}>還沒有寵物，去寵物商店扭蛋吧！</div>
         )}
       </div>
       <button onClick={handleSave} style={{ padding:"13px", borderRadius:14, border:"none", background:`linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})`, color:"#FFFCFA", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"Inter, sans-serif" }}>儲存</button>
@@ -1279,10 +1773,10 @@ function LeaderboardScreen({ user, onBack, t }) {
         ))}
       </div>
 
-      {/* 排名趨勢圖表 */}
+      {      {/* 排名趨勢圖表 */}
       <RankTrendChart rankHistory={user.rankHistory || []} days={7} t={t} />
-
-      {/* 排行榜列表 */}
+      
+      /* 排行榜列表 */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {rankedData.map((item, idx) => {
           const medalEmoji = item.rank === 1 ? "🥇" : item.rank === 2 ? "🥈" : item.rank === 3 ? "🥉" : "  ";
@@ -1369,7 +1863,7 @@ const PET_CATALOG = [
   { id: "ssr_cat", name: "SSR 貓貓", emoji: "✨🐱", rarity: "ssr", animal: "cat", cost: 200 },
 ];
 
-const GACHA_COST = 50;
+
 const GACHA_PROBABILITIES = { common: 0.60, legend: 0.30, ssr: 0.10 };
 
 function performGacha() {
@@ -1391,841 +1885,3 @@ function performGacha() {
   };
 }
 
-function PetShopScreen({ user, onBack, onUpdateUser, t }) {
-  const [gachaResult, setGachaResult] = useState(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [, forceUpdate] = useState(0);
-
-  const coins = user.coins || 0;
-  const pets = user.pets || [];
-  const canGacha = coins >= GACHA_COST;
-
-  function handleGacha() {
-    if (!canGacha) return;
-    
-    setIsAnimating(true);
-    
-    // 模擬扭蛋動畫延遲
-    setTimeout(() => {
-      const newPet = performGacha();
-      setGachaResult(newPet);
-      
-      // 更新使用者資料
-      const updatedPets = [...pets, newPet];
-      const updatedCoins = coins - GACHA_COST;
-      onUpdateUser({ pets: updatedPets, coins: updatedCoins });
-      
-      setIsAnimating(false);
-    }, 1500);
-  }
-
-  function closeResult() {
-    setGachaResult(null);
-    forceUpdate(n => n + 1);
-  }
-
-  const rarityColors = {
-    common: SAGE,
-    legend: AMETHYST,
-    ssr: GOLD,
-  };
-
-  const rarityLabels = {
-    common: "普通",
-    legend: "傳說",
-    ssr: "SSR",
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* 頭部 */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={onBack}
-            style={{
-              background: "none",
-              border: "none",
-              color: t.muted,
-              fontSize: 13,
-              cursor: "pointer",
-              fontFamily: "Inter, sans-serif",
-              padding: 0,
-            }}
-          >
-            ← 返回
-          </button>
-          <span style={{ fontFamily: "Fraunces, serif", fontSize: 18, fontWeight: 600, color: t.ink }}>
-            寵物扭蛋
-          </span>
-        </div>
-        <CoinBadge coins={coins} />
-      </div>
-
-      {/* 扭蛋介紹 */}
-      <div style={{ background: t.cardAlt, borderRadius: 14, padding: "14px 16px" }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 13, color: t.ink, marginBottom: 8 }}>
-          🎰 扭蛋機率
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
-            <span>普通 (兔兔/狗狗/貓貓)</span>
-            <span style={{ fontWeight: 700, color: SAGE }}>60%</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
-            <span>傳說 (兔兔/狗狗/貓貓)</span>
-            <span style={{ fontWeight: 700, color: AMETHYST }}>30%</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.muted, fontFamily: "Inter, sans-serif" }}>
-            <span>SSR (兔兔/狗狗/貓貓)</span>
-            <span style={{ fontWeight: 700, color: GOLD }}>10%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 扭蛋按鈕 */}
-      <button
-        onClick={handleGacha}
-        disabled={!canGacha || isAnimating}
-        style={{
-          width: "100%",
-          padding: "16px",
-          borderRadius: 14,
-          border: "none",
-          background: canGacha && !isAnimating ? `linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})` : t.chip,
-          color: canGacha && !isAnimating ? "#FFFCFA" : t.muted,
-          fontWeight: 700,
-          fontSize: 16,
-          cursor: canGacha && !isAnimating ? "pointer" : "not-allowed",
-          fontFamily: "Inter, sans-serif",
-          transition: "transform 0.2s",
-          transform: isAnimating ? "scale(0.95)" : "scale(1)",
-        }}
-      >
-        {isAnimating ? "轉動中... ✨" : `🎰 扭蛋 (${GACHA_COST} 金幣)`}
-      </button>
-
-      {!canGacha && (
-        <div style={{ textAlign: "center", color: CLAY_DEEP, fontSize: 12, fontFamily: "Inter, sans-serif" }}>
-          ⚠️ 金幣不足，需要 {GACHA_COST} 金幣
-        </div>
-      )}
-
-      {/* 已收集的寵物 */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontFamily: "Fraunces, serif", fontSize: 14, fontWeight: 600, color: t.ink }}>
-          已收集的寵物 ({pets.length})
-        </div>
-        {pets.length === 0 ? (
-          <div style={{ textAlign: "center", color: t.muted, fontSize: 12, padding: "20px 0", fontFamily: "Inter, sans-serif" }}>
-            還沒有寵物，開始扭蛋吧！
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 10 }}>
-            {pets.map((pet, idx) => (
-              <div
-                key={pet.instanceId}
-                style={{
-                  background: t.card,
-                  border: `2px solid ${rarityColors[pet.rarity]}`,
-                  borderRadius: 12,
-                  padding: "10px",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <div style={{ fontSize: 32 }}>{pet.emoji}</div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: t.ink, fontFamily: "Inter, sans-serif" }}>
-                  {pet.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: rarityColors[pet.rarity],
-                    fontFamily: "Inter, sans-serif",
-                  }}
-                >
-                  {rarityLabels[pet.rarity]}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 扭蛋結果彈窗 */}
-      {gachaResult && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: t.overlay,
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-          }}
-          onClick={closeResult}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: t.card,
-              borderRadius: 24,
-              padding: "32px 24px",
-              textAlign: "center",
-              maxWidth: 280,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-              animation: "slideUp 0.4s cubic-bezier(.22,1,.36,1)",
-            }}
-          >
-            <div style={{ fontSize: 60, marginBottom: 16 }}>{gachaResult.emoji}</div>
-            <div style={{ fontFamily: "Fraunces, serif", fontWeight: 700, fontSize: 18, color: t.ink, marginBottom: 8 }}>
-              {gachaResult.name}
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: rarityColors[gachaResult.rarity],
-                fontFamily: "Inter, sans-serif",
-                marginBottom: 16,
-              }}
-            >
-              ⭐ {rarityLabels[gachaResult.rarity]}
-            </div>
-            <button
-              onClick={closeResult}
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: 12,
-                border: "none",
-                background: `linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})`,
-                color: "#FFFCFA",
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: "pointer",
-                fontFamily: "Inter, sans-serif",
-              }}
-            >
-              確認
-            </button>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-
-/* ══════════════════════════════════════════
-   Friend Detail View - 好友詳細進度視圖
-   展示好友的每日習慣完成情況、每週進度、每月統計
-   ══════════════════════════════════════════ */
-
-function FriendDetailView({ friend, onBack, t }) {
-  const today = new Date();
-  const todayKey = toKey(today);
-  const habits = friend.habits || [];
-  
-  // 計算每日進度
-  const dailyCompleted = habits.filter(h => (h.completions||[]).includes(todayKey)).length;
-  const dailyTotal = habits.length;
-  const dailyPct = dailyTotal > 0 ? Math.round((dailyCompleted / dailyTotal) * 100) : 0;
-  
-  // 計算每週進度
-  const weekStart = startOfWeek(today);
-  const weekDays = Array.from({length:7}).map((_,i) => addDays(weekStart, i));
-  const weekCompleted = habits.reduce((sum, h) => {
-    const daysCompleted = weekDays.filter(d => (h.completions||[]).includes(toKey(d))).length;
-    return sum + daysCompleted;
-  }, 0);
-  const weekTotal = habits.length * 7;
-  const weekPct = weekTotal > 0 ? Math.round((weekCompleted / weekTotal) * 100) : 0;
-  
-  // 計算每月進度
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const monthDays = (monthEnd.getDate());
-  const monthCompleted = habits.reduce((sum, h) => {
-    let count = 0;
-    for (let i = 1; i <= monthDays; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth(), i);
-      if (d <= today && (h.completions||[]).includes(toKey(d))) count++;
-    }
-    return sum + count;
-  }, 0);
-  const monthTotal = habits.length * monthDays;
-  const monthPct = monthTotal > 0 ? Math.round((monthCompleted / monthTotal) * 100) : 0;
-  
-  // 計算連續天數
-  const streak = habits.length > 0 ? Math.max(...habits.map(h => computeStreak(h.completions||[], today))) : 0;
-  
-  // 計算等級
-  const xp = computeUserXP(friend);
-  const { level } = levelInfo(xp);
-  const plant = plantStage(level);
-  
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-      {/* 頭部：返回按鈕 + 好友名稱 */}
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <button onClick={onBack} style={{ background:"none", border:"none", color:t.muted, fontSize:13, cursor:"pointer", fontFamily:"Inter, sans-serif", padding:0 }}>← 返回</button>
-        <span style={{ fontFamily:"Fraunces, serif", fontSize:18, fontWeight:600, color:t.ink }}>
-          {friend.username} 的進度
-        </span>
-      </div>
-      
-      {/* 好友卡片：頭像、等級、連續天數 */}
-      <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"16px", display:"flex", gap:12 }}>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8, flexShrink:0 }}>
-          <Avatar user={friend} size={56} />
-          <div style={{ fontSize:24 }}>{plant.emoji}</div>
-        </div>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:15, color:t.ink, marginBottom:2 }}>
-            {friend.username}
-          </div>
-          <div style={{ fontSize:12, color:t.muted, fontFamily:"Inter, sans-serif", marginBottom:8 }}>
-            Lv.{level} · 🔥 {streak} 天連續
-          </div>
-          {friend.bio && (
-            <div style={{ fontSize:12, color:t.muted, fontFamily:"Inter, sans-serif", fontStyle:"italic" }}>
-              "{friend.bio}"
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* 進度統計卡片 */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
-        <StatCard label="今日進度" value={`${dailyPct}%`} color={SAGE} t={t} />
-        <StatCard label="本週進度" value={`${weekPct}%`} color={AMETHYST} t={t} />
-        <StatCard label="本月進度" value={`${monthPct}%`} color={GOLD} t={t} />
-      </div>
-      
-      {/* 詳細進度條 */}
-      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-        {/* 每日進度 */}
-        <div style={{ background:t.cardAlt, borderRadius:14, padding:"12px 14px" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-            <span style={{ fontFamily:"Inter, sans-serif", fontWeight:700, fontSize:12, color:t.ink }}>今日習慣</span>
-            <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13, color:SAGE }}>{dailyCompleted}/{dailyTotal}</span>
-          </div>
-          <ProgressBar value={dailyPct} color={SAGE} t={t} height={6} />
-        </div>
-        
-        {/* 每週進度 */}
-        <div style={{ background:t.cardAlt, borderRadius:14, padding:"12px 14px" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-            <span style={{ fontFamily:"Inter, sans-serif", fontWeight:700, fontSize:12, color:t.ink }}>本週習慣</span>
-            <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13, color:AMETHYST }}>{weekCompleted}/{weekTotal}</span>
-          </div>
-          <ProgressBar value={weekPct} color={AMETHYST} t={t} height={6} />
-        </div>
-        
-        {/* 每月進度 */}
-        <div style={{ background:t.cardAlt, borderRadius:14, padding:"12px 14px" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-            <span style={{ fontFamily:"Inter, sans-serif", fontWeight:700, fontSize:12, color:t.ink }}>本月習慣</span>
-            <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13, color:GOLD }}>{monthCompleted}/{monthTotal}</span>
-          </div>
-          <ProgressBar value={monthPct} color={GOLD} t={t} height={6} />
-        </div>
-      </div>
-      
-      {/* 習慣清單 */}
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <div style={{ fontFamily:"Fraunces, serif", fontSize:14, fontWeight:600, color:t.ink }}>
-          習慣清單 ({habits.length})
-        </div>
-        {habits.length === 0 ? (
-          <div style={{ textAlign:"center", color:t.muted, fontSize:12, padding:"20px 0", fontFamily:"Inter, sans-serif" }}>
-            還沒有習慣
-          </div>
-        ) : (
-          habits.map(habit => {
-            const streak = computeStreak(habit.completions||[], today);
-            const completedDays = new Set(habit.completions||[]).size;
-            const todayDone = (habit.completions||[]).includes(todayKey);
-            const weekDone = weekDays.filter(d => (habit.completions||[]).includes(toKey(d))).length;
-            
-            return (
-              <div key={habit.id} style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:14, padding:"12px 14px" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                  <span style={{ fontSize:20 }}>{habit.emoji}</span>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontFamily:"Inter, sans-serif", fontWeight:600, fontSize:13, color:t.ink }}>
-                      {habit.name}
-                    </div>
-                    <div style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif" }}>
-                      {completedDays} 天完成 · 🔥 {streak} 天連續
-                    </div>
-                  </div>
-                  <div style={{ textAlign:"right", flexShrink:0 }}>
-                    <div style={{ fontSize:20 }}>{todayDone ? "✅" : "⭕"}</div>
-                    <div style={{ fontSize:10, color:t.muted, fontFamily:"Inter, sans-serif" }}>今日</div>
-                  </div>
-                </div>
-                
-                {/* 本週日期進度 */}
-                <div style={{ display:"flex", gap:4, marginTop:8 }}>
-                  {weekDays.map((d, i) => {
-                    const key = toKey(d);
-                    const done = (habit.completions||[]).includes(key);
-                    const isToday = d.toDateString() === today.toDateString();
-                    const isFuture = d > today;
-                    
-                    return (
-                      <div
-                        key={i}
-                        style={{
-                          flex:1,
-                          height:24,
-                          borderRadius:6,
-                          background: isFuture ? t.chip : done ? SAGE : `${SAGE}33`,
-                          display:"flex",
-                          alignItems:"center",
-                          justifyContent:"center",
-                          fontSize:10,
-                          fontWeight:700,
-                          color: isFuture ? t.muted : done ? "#FFFCFA" : SAGE,
-                          border: isToday ? `2px solid ${SAGE}` : "none",
-                          boxSizing:"border-box",
-                          cursor:"default",
-                          title: `${["日","一","二","三","四","五","六"][d.getDay()]} ${d.getDate()}`
-                        }}
-                      >
-                        {done ? "✓" : d.getDate()}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-}
-
-
-/* ══════════════════════════════════════════
-   Friend Habit Card
-   ══════════════════════════════════════════ */
-function FriendHabitCard({ friend, t, onRemind, remCount }) {
-  const today = new Date();
-  const todayKey = toKey(today);
-  const habits = friend.habits || [];
-  const completed = habits.filter(h => (h.completions||[]).includes(todayKey)).length;
-  const total = habits.length;
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const streak = habits.length > 0 ? Math.max(...habits.map(h => computeStreak(h.completions||[], today))) : 0;
-  const xp = computeUserXP(friend);
-  const { level } = levelInfo(xp);
-  const plant = plantStage(level);
-  return (
-    <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"16px", display:"flex", gap:12 }}>
-      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8, flexShrink:0 }}>
-        <Avatar user={friend} size={56} />
-        <div style={{ fontSize:28 }}>{plant.emoji}</div>
-      </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:15, color:t.ink, marginBottom:2 }}>{friend.username}</div>
-        <div style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif", marginBottom:8 }}>Lv.{level} · 🔥 {streak} 天連續</div>
-        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-          <div style={{ flex:1 }}>
-            <ProgressBar value={pct} color={SAGE} t={t} height={6} />
-          </div>
-          <span style={{ fontSize:12, fontFamily:"Fraunces, serif", fontWeight:700, color:SAGE }}>{completed}/{total}</span>
-        </div>
-        <button onClick={onRemind} disabled={remCount>=3} style={{ width:"100%", padding:"6px", borderRadius:8, border:"none", background:remCount>=3?t.chip:`${AMETHYST}22`, color:remCount>=3?t.muted:AMETHYST, fontWeight:700, fontSize:12, cursor:remCount>=3?"not-allowed":"pointer", fontFamily:"Inter, sans-serif" }}>
-          {remCount>=3?`已達提醒上限 (${remCount}/3)`:`📢 提醒 (${remCount}/3)`}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════
-   Main App
-   ══════════════════════════════════════════ */
-export default function App() {
-  const [darkMode, setDarkMode] = useState(()=>loadJSON("rpg:dark",false));
-  const t = darkMode ? DARK : LIGHT;
-  const [screen, setScreen] = useState("auth");
-  const [userId, setUserId] = useState(null);
-  const [user, setUser] = useState(null);
-  const [subScreen, setSubScreen] = useState(null);
-  const [view, setView] = useState("today");
-  const [showAddHabit, setShowAddHabit] = useState(false);
-  const [editingHabit, setEditingHabit] = useState(null);
-  const [coinToast, setCoinToast] = useState(null);
-  const [, forceUpdate] = useState(0);
-
-  useEffect(()=>{
-    const session=getCurrentSession();
-    if(session){
-      const u=getUserById(session);
-      if(u){
-        setUserId(session);setUser(u);setScreen("home");
-        if (GAS_CONFIGURED && u.email) {
-          gasFetchByEmail(u.email).then(remote=>{
-            if(remote && remote.id===session){
-              updateUser(session, remote);
-              setUser(getUserById(session));
-            }
-          });
-        }
-      }
-    }
-  },[]);
-  // ✅ 新增：當頁面獲得焦點時，自動從 Google Sheet 重新讀取最新資料
-  useEffect(()=>{
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible' && userId && GAS_CONFIGURED) {
-        const u = getUserById(userId);
-        if (u && u.email) {
-          gasFetchByEmail(u.email).then(remote=>{
-            if(remote && remote.id===userId){
-              updateUser(userId, remote);
-              setUser(getUserById(userId));
-            }
-          });
-        }
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [userId]);
-  
-    // ✅ 新增：定期同步本機資料到後端（每 30 秒一次）
-  useEffect(() => {
-    if (!userId || !GAS_CONFIGURED) return;
-    
-    const syncInterval = setInterval(() => {
-      const u = getUserById(userId);
-        if (u) {
-          const allUsers = getAllUsers();
-          const updatedUser = recordTodayRank(u, allUsers);
-          if (updatedUser.rankHistory && updatedUser.rankHistory.length > (u.rankHistory?.length || 0)) {
-            updateUser(userId, { rankHistory: updatedUser.rankHistory });
-          }
-        }
-      if (u) {
-        gasSyncUser(u).catch(err => console.warn("背景同步失敗:", err));
-      }
-    }, 30000); // 每 30 秒同步一次
-    
-    return () => clearInterval(syncInterval);
-  }, [userId]);
-
-  // ✅ 新增：當應用程式重新獲得焦點時，立即同步一次（確保多裝置間的頭像更新）
-  useEffect(() => {
-    function handleFocus() {
-      if (userId && GAS_CONFIGURED) {
-        const u = getUserById(userId);
-        if (u && u.email) {
-          gasFetchByEmail(u.email).then(remote => {
-            if (remote && remote.id === userId) {
-              updateUser(userId, remote);
-              setUser(getUserById(userId));
-            }
-          }).catch(err => console.warn("焦點同步失敗:", err));
-        }
-      }
-    }
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [userId]);
-
-  useEffect(()=>{saveJSON("rpg:dark",darkMode);},[darkMode]);
-
-  function refreshUser() { const u=getUserById(userId); if(u){setUser({...u});forceUpdate(n=>n+1);} }
-  function showCoinGain(amount,reason) { setCoinToast({amount,reason,id:Date.now()}); setTimeout(()=>setCoinToast(null),2200); }
-  function handleLogin(uid) { const u=getUserById(uid); setUserId(uid); setUser(u); setScreen("home"); }
-  function handleLogout() { clearSession(); setUserId(null); setUser(null); setScreen("auth"); setSubScreen(null); setView("today"); }
-  function handleSaveProfile(patch) {
-    updateUser(userId,patch); refreshUser();
-    const updated = getUserById(userId);
-    if (updated) gasSyncUser(updated);
-  }
-  function handleUpdateUser(patch) { updateUser(userId,patch); refreshUser(); }
-
-  function toggleHabit(habitId) {
-    const u=getUserById(userId); if(!u) return;
-    const today=toKey(new Date());
-    let coinEarned=0;
-    const habits=(u.habits||[]).map(h=>{
-      if(h.id!==habitId) return h;
-      const completions=h.completions||[];
-      const rewardedDays=h.rewardedDays||[];
-      const alreadyDone=completions.includes(today);
-      if(alreadyDone){
-        return {...h,completions:completions.filter(d=>d!==today)};
-      } else {
-        if(!rewardedDays.includes(today)){
-          coinEarned=COINS_PER_CHECKIN;
-          return {...h,completions:[...completions,today],rewardedDays:[...rewardedDays,today]};
-        }
-        return {...h,completions:[...completions,today]};
-      }
-    });
-    updateUser(userId,{habits});
-    if(coinEarned>0){ updateUser(userId,{coins:(u.coins||0)+coinEarned}); showCoinGain(coinEarned,"習慣打卡"); }
-    const updatedU=getUserById(userId);
-    const challenge=getWeekChallenge(updatedU?.habits||[],new Date());
-    if(challenge?.complete){
-      const claimed=(updatedU?.claimedChallenges||[]).includes(challenge.wsKey);
-      if(!claimed){
-        updateUser(userId,{coins:(updatedU?.coins||0)+COINS_CHALLENGE_COMPLETE,claimedChallenges:[...(updatedU?.claimedChallenges||[]),challenge.wsKey]});
-        setTimeout(()=>showCoinGain(COINS_CHALLENGE_COMPLETE,"本週挑戰達成！"),400);
-      }
-    }
-    refreshUser();
-    const finalUser = getUserById(userId);
-    if(finalUser) gasSyncUser(finalUser);
-  }
-
-  function addHabit(data) {
-    const u=getUserById(userId); if(!u) return;
-    const newHabit={id:`h_${Date.now()}`,...data,completions:[],rewardedDays:[],createdAt:new Date().toISOString()};
-    updateUser(userId,{habits:[...(u.habits||[]),newHabit]}); refreshUser();
-    const updated=getUserById(userId); if(updated) gasSyncUser(updated);
-  }
-  function saveEditHabit(habitId,data) {
-    const u=getUserById(userId); if(!u) return;
-    updateUser(userId,{habits:(u.habits||[]).map(h=>h.id===habitId?{...h,...data}:h)}); refreshUser();
-    const updated=getUserById(userId); if(updated) gasSyncUser(updated);
-  }
-  function deleteHabit(habitId) {
-    const u=getUserById(userId); if(!u) return;
-    updateUser(userId,{habits:(u.habits||[]).filter(h=>h.id!==habitId)}); refreshUser();
-    const updated=getUserById(userId); if(updated) gasSyncUser(updated);
-  }
-
-  if(screen==="auth") return (
-    <div style={{ width:"100%", minHeight:"100vh", background:t.bg, fontFamily:"Inter, sans-serif", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <style>{FONT_IMPORT+`* { box-sizing:border-box; } html,body,#root { margin:0; width:100%; min-height:100vh; }`}</style>
-      <div style={{ width:"100%", maxWidth:480, padding:"clamp(24px,8vw,60px) clamp(16px,4vw,32px) 40px" }}>
-        <div style={{ textAlign:"center", marginBottom:36 }}>
-          <div style={{ fontSize:52, marginBottom:8 }}>🌱</div>
-          <h1 style={{ fontFamily:"Fraunces, serif", fontSize:32, fontWeight:700, color:t.ink, margin:"0 0 6px" }}>Daily RPG</h1>
-          <p style={{ color:t.muted, fontSize:14, margin:0 }}>習慣養成冒險旅程</p>
-        </div>
-        <div style={{ background:t.card, borderRadius:16, padding:"24px 22px", boxShadow:"0 8px 32px rgba(0,0,0,0.08)" }}>
-          <AuthScreen onLogin={handleLogin} t={t} />
-        </div>
-      </div>
-    </div>
-  );
-
-  if(!user) return null;
-
-  const today=new Date(); const todayKey=toKey(today);
-  const habits=user.habits||[];
-  const xp=computeUserXP(user); const {level,pct:levelPct}=levelInfo(xp);
-  const plant=plantStage(level); const coins=user.coins||0;
-  const activeTitle=ALL_TITLES.find(tt=>tt.id===(user.activeTitle||"rookie"))||ALL_TITLES[0];
-  const challenge=getWeekChallenge(habits,today);
-  const challengeClaimed=challenge&&(user.claimedChallenges||[]).includes(challenge.wsKey);
-  const completedToday=habits.filter(h=>(h.completions||[]).includes(todayKey)).length;
-  const todayPct=habits.length>0?Math.round((completedToday/habits.length)*100):0;
-  const weekPct=rateForDays(habits,today,7);
-  const monthPct=rateForDays(habits,today,30);
-
-  const subScreenWrapper=(child)=>(
-    <div style={{ width:"100%", minHeight:"100vh", background:t.bg, display:"flex", justifyContent:"center" }}>
-      <style>{FONT_IMPORT+`* { box-sizing:border-box; } html,body,#root { margin:0; width:100%; min-height:100vh; }`}</style>
-      <div style={{ width:"100%", maxWidth:720, padding:"clamp(20px,5vw,32px) clamp(16px,4vw,32px) 80px" }}>{child}</div>
-    </div>
-  );
-
-  if(subScreen==="profile") return subScreenWrapper(<ProfileScreen user={user} onBack={()=>setSubScreen(null)} onSave={handleSaveProfile} onGoShop={()=>setSubScreen("shop")} t={t} />);
-  if(subScreen==="friends") return subScreenWrapper(<FriendsScreen user={user} onBack={()=>{setSubScreen(null);refreshUser();}} t={t} />);
-  if(subScreen==="titles") return subScreenWrapper(<TitlesScreen user={user} onBack={()=>{setSubScreen(null);refreshUser();}} onUpdate={handleUpdateUser} t={t} />);
-  if(subScreen==="shop") return subScreenWrapper(<PetShopScreen user={user} onBack={()=>{setSubScreen(null);refreshUser();}} onUpdateUser={handleUpdateUser} t={t} />);
-
-  const VIEWS=[["today","今天"],["week","本週"],["month","本月"],["stats","統計"]];
-
-  return (
-    <div style={{ width:"100%", minHeight:"100vh", background:t.bg, display:"flex", justifyContent:"center", fontFamily:"Inter, sans-serif" }}>
-      <style>{FONT_IMPORT+`
-        @keyframes fade-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes coin-pop{0%{opacity:0;transform:translateX(-50%) translateY(0);}15%{opacity:1;}80%{opacity:1;transform:translateX(-50%) translateY(-32px);}100%{opacity:0;transform:translateX(-50%) translateY(-40px);}}
-        * { box-sizing:border-box; } html,body,#root { margin:0; width:100%; min-height:100vh; }
-      `}</style>
-
-      {coinToast&&(
-        <div key={coinToast.id} style={{ position:"fixed", top:70, left:"50%", transform:"translateX(-50%)", zIndex:99, background:`${COIN}ee`, color:"#fff", padding:"8px 18px", borderRadius:20, fontFamily:"Fraunces, serif", fontWeight:700, fontSize:14, whiteSpace:"nowrap", animation:"coin-pop 2.2s ease forwards", pointerEvents:"none" }}>
-          🪙 +{coinToast.amount} {coinToast.reason}
-        </div>
-      )}
-
-      <div style={{ width:"100%", maxWidth:960, padding:"clamp(20px,5vw,32px) clamp(16px,4vw,32px) 100px" }}>
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0, flex:1 }}>
-            <button onClick={()=>setSubScreen("profile")} style={{ background:"none", border:"none", cursor:"pointer", padding:0, flexShrink:0 }}><Avatar user={user} size={42} /></button>
-            <div style={{ minWidth:0 }}>
-              <div style={{ fontFamily:"Fraunces, serif", fontSize:17, fontWeight:600, color:t.ink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user.username}</div>
-              <div style={{ fontSize:11.5, color:t.muted, fontFamily:"Inter, sans-serif" }}>{activeTitle.emoji} {activeTitle.label} · {plant.emoji} Lv.{level}</div>
-            </div>
-          </div>
-          <div style={{ display:"flex", gap:5, alignItems:"center", flexShrink:0 }}>
-            <button onClick={()=>setSubScreen("titles")} style={{ display:"flex", alignItems:"center", gap:4, border:`1px solid ${COIN}55`, background:`${COIN}15`, borderRadius:10, padding:"5px 9px", cursor:"pointer" }}>
-              <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13, color:COIN }}>🪙 {coins}</span>
-            </button>
-            <button onClick={()=>setSubScreen("shop")} style={{ border:"none", background:t.chip, borderRadius:10, width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:15 }}>🎰</button>
-            <button onClick={()=>setSubScreen("friends")} style={{ border:"none", background:t.chip, borderRadius:10, width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:15 }}>👥</button>
-            <button onClick={()=>setDarkMode(v=>!v)} style={{ border:"none", background:t.chip, borderRadius:10, width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:14 }}>{darkMode?"☀️":"🌙"}</button>
-            <button onClick={handleLogout} style={{ border:"none", background:t.chip, borderRadius:10, padding:"0 9px", height:34, cursor:"pointer", color:t.muted, fontFamily:"Inter, sans-serif", fontWeight:700, fontSize:12 }}>登出</button>
-          </div>
-        </div>
-
-        {/* XP bar */}
-        <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:14, padding:"12px 14px", marginBottom:16 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-            <span style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif", fontWeight:600 }}>經驗值</span>
-            <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:12, color:t.ink }}>{xp} / {(level+1)*LEVEL_STEP}</span>
-          </div>
-          <ProgressBar value={levelPct} color={CLAY} t={t} height={6} />
-        </div>
-
-        {/* View tabs */}
-        <div style={{ display:"flex", background:t.chip, borderRadius:12, padding:3, marginBottom:14 }}>
-          {VIEWS.map(([k,l]) => (
-            <button key={k} onClick={()=>setView(k)} style={{ flex:1, padding:"8px 0", borderRadius:9, border:"none", background:view===k?t.card:"transparent", color:view===k?t.ink:t.muted, fontWeight:700, fontSize:12.5, cursor:"pointer", fontFamily:"Inter, sans-serif" }}>{l}</button>
-          ))}
-        </div>
-
-        {/* Content */}
-        {view==="today"&&(<div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <TodayProgressBanner habits={habits} todayKey={todayKey} t={t} />
-          {habits.length===0?(<div style={{ textAlign:"center", padding:"40px 20px", color:t.muted, fontSize:14, fontFamily:"Inter, sans-serif" }}>還沒有習慣，點下方「+」新增吧！</div>):(<div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {habits.map(h=>{
-              const done=(h.completions||[]).includes(todayKey);
-              const cat=CATEGORIES.find(c=>c.key===h.category)||CATEGORIES[0];
-              return (
-                <div key={h.id} onClick={()=>toggleHabit(h.id)} style={{ background:t.card, border:`1.5px solid ${done?cat.color:t.border}`, borderRadius:14, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", opacity:done?0.7:1 }}>
-                  <div style={{ fontSize:24, flexShrink:0 }}>{h.emoji}</div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:14, color:t.ink, textDecoration:done?"line-through":"none" }}>{h.name}</div>
-                    <div style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif" }}>{cat.emoji} {cat.label}</div>
-                  </div>
-                  <div style={{ fontSize:20, flexShrink:0 }}>{done?"✅":"⭕"}</div>
-                </div>
-              );
-            })}
-          </div>)}
-        </div>)}
-
-        {view==="week"&&(<div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"16px" }}>
-            <div style={{ fontFamily:"Fraunces, serif", fontSize:15, fontWeight:700, color:t.ink, marginBottom:12 }}>本週完成率</div>
-            <div style={{ display:"flex", gap:8, alignItems:"flex-end", justifyContent:"space-around", height:120 }}>
-              {Array(7).fill(null).map((_,i)=>{
-                const d=addDays(today,-6+i);
-                const key=toKey(d);
-                const done=habits.filter(h=>(h.completions||[]).includes(key)).length;
-                const pct=habits.length>0?(done/habits.length)*100:0;
-                const isToday=toKey(d)===todayKey;
-                return (
-                  <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                    <div style={{ width:"100%", height:`${Math.max(10,pct*0.8)}px`, borderRadius:6, background:pct>50?SAGE:pct>25?AMETHYST:CLAY, border:isToday?`2px solid ${t.ink}`:"none" }} />
-                    <div style={{ fontSize:10, color:t.muted, fontFamily:"Inter, sans-serif", fontWeight:600 }}>{["日","一","二","三","四","五","六"][d.getDay()]}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"16px" }}>
-            <div style={{ fontFamily:"Fraunces, serif", fontSize:15, fontWeight:700, color:t.ink, marginBottom:12 }}>本週習慣</div>
-            {habits.length===0?(<div style={{ color:t.muted, fontSize:13, fontFamily:"Inter, sans-serif" }}>還沒有習慣</div>):(<div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              {habits.map(h=>{
-                const streak=computeStreak(h.completions||[],today);
-                const weekDone=Array.from({length:7}).filter((_,i)=>(h.completions||[]).includes(toKey(addDays(today,-i)))).length;
-                return (
-                  <div key={h.id} style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <div style={{ fontSize:20 }}>{h.emoji}</div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13, color:t.ink }}>{h.name}</div>
-                      <div style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif" }}>🔥 {streak} 天連續 · 本週 {weekDone}/7</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>)}
-          </div>
-        </div>)}
-
-        {view==="month"&&(<MonthHeatmap habits={habits} t={t} />)}
-
-        {view==="stats"&&(<div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <div style={{ display:"flex", gap:10 }}>
-            <StatCard label="今天" value={`${todayPct}%`} color={CLAY} t={t} />
-            <StatCard label="本週" value={`${weekPct}%`} color={AMETHYST} t={t} />
-            <StatCard label="本月" value={`${monthPct}%`} color={SAGE} t={t} />
-          </div>
-          {challenge&&(<div style={{ background:t.card, border:`1.5px solid ${challengeClaimed?`${SAGE}55`:GOLD}55`, borderRadius:18, padding:"14px 16px" }}>
-            <div style={{ fontFamily:"Fraunces, serif", fontSize:15, fontWeight:700, color:t.ink, marginBottom:8 }}>本週挑戰</div>
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-              <div style={{ fontSize:24 }}>{challenge.habit.emoji}</div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:14, color:t.ink }}>{challenge.habit.name}</div>
-                <div style={{ fontSize:11, color:t.muted, fontFamily:"Inter, sans-serif" }}>完成 {challenge.countDone} / 7 天</div>
-              </div>
-            </div>
-            <ProgressBar value={(challenge.countDone/7)*100} color={challengeClaimed?SAGE:GOLD} t={t} height={6} />
-            {challenge.complete&&!challengeClaimed&&(<div style={{ marginTop:10, padding:"8px 12px", borderRadius:10, background:`${GOLD}22`, color:GOLD, fontSize:12, fontFamily:"Inter, sans-serif", fontWeight:700, textAlign:"center" }}>🎉 本週挑戰達成！已獲得 {COINS_CHALLENGE_COMPLETE} 金幣</div>)}
-            {challengeClaimed&&(<div style={{ marginTop:10, padding:"8px 12px", borderRadius:10, background:`${SAGE}22`, color:SAGE, fontSize:12, fontFamily:"Inter, sans-serif", fontWeight:700, textAlign:"center" }}>✅ 已領取獎勵</div>)}
-          </div>)}
-          <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"16px" }}>
-            <div style={{ fontFamily:"Fraunces, serif", fontSize:14, fontWeight:600, color:t.ink, marginBottom:14 }}>分類概覽（近30天）</div>
-            {CATEGORIES.map(c=>{
-              const catHabits=habits.filter(h=>h.category===c.key);
-              if(catHabits.length===0) return null;
-              const rate=rateForDays(catHabits,today,30);
-              return (
-                <div key={c.key} style={{ marginBottom:12 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-                    <span style={{ fontSize:12.5, color:t.muted, fontFamily:"Inter, sans-serif" }}>{c.emoji} {c.label} <span style={{ opacity:0.6 }}>({catHabits.length}個)</span></span>
-                    <span style={{ fontFamily:"Fraunces, serif", fontWeight:700, fontSize:13.5, color:c.color }}>{rate}%</span>
-                  </div>
-                  <ProgressBar value={rate} color={c.color} t={t} height={6} />
-                </div>
-              );
-            })}
-          </div>
-        </div>)}
-
-        {/* FAB */}
-        <button onClick={()=>setShowAddHabit(true)} style={{ position:"fixed", bottom:30, right:30, width:56, height:56, borderRadius:"50%", border:"none", background:`linear-gradient(135deg, ${CLAY}, ${CLAY_DEEP})`, color:"#fff", fontSize:28, cursor:"pointer", boxShadow:"0 8px 24px rgba(0,0,0,0.15)", zIndex:50 }}>+</button>
-
-        {/* Modals */}
-        {showAddHabit&&(<HabitFormSheet onClose={()=>setShowAddHabit(false)} onSave={data=>{addHabit(data);setShowAddHabit(false);}} t={t} />)}
-        {editingHabit&&(<HabitFormSheet initial={editingHabit} onClose={()=>setEditingHabit(null)} onSave={data=>{saveEditHabit(editingHabit.id,data);setEditingHabit(null);}} t={t} />)}
-      </div>
-    </div>
-  );
-}
